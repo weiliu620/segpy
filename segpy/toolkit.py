@@ -394,6 +394,9 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
         cdp_catalog_builder.add(trace_header.ensemble_num, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
+        # print('trace number, ', trace_number, trace_header.inline_number, trace_header.crossline_number,
+        #       trace_header.file_sequence_num, trace_header.ensemble_num)
+
 
     progress_callback(_READ_PROPORTION)
 

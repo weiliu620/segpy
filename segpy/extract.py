@@ -5,7 +5,7 @@ from segpy.header import Header, SubFormatMeta
 from segpy.packer import make_header_packer
 
 from segpy.util import ensure_superset
-from segpy_numpy.dtypes import make_dtype
+from segpy.dtypes import make_dtype
 
 
 def extract_trace_header_field_3d(reader_3d, fields, inline_numbers=None, xline_numbers=None, null=None):

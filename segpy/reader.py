@@ -35,7 +35,8 @@ def create_reader(
         trace_header_format=TraceHeaderRev1,
         endian='>',
         progress=None,
-        cache_directory=".segpy"):
+        cache_directory= None,
+        dim = None):
     """Create a SegYReader based on performing a scan of SEG Y data.
 
     This function is the preferred method for creating SegYReader
@@ -69,6 +70,12 @@ def create_reader(
             are interpreted as being relative to the directory containing
             the SEG Y file. Absolute paths are used as is. If
             cache_directory is None, caching is disabled.
+
+        dim: Sometimes cpd_catalog and line_catalog are not correct indicator of
+        2D or 3D data, when dim is not none, force the reader to treat data as
+        2d (dim = 2) or 3d (dim = 3). When dim = none, fall back to the original
+        logic of segpy and try to automatically infer the dimension from data.
+        (added by Wei Liu)
 
     Raises:
         ValueError: The file-like object``fh`` is unsuitable for some reason,
@@ -116,11 +123,13 @@ def create_reader(
         cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
         if cache_file_path is not None:
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
+            print('reader.py, reader loaded from {}', cache_file_path)
 
     if reader is None:
-        reader = _make_reader(fh, encoding, trace_header_format, endian, progress)
+        reader = _make_reader(fh, encoding, trace_header_format, endian, progress, dim = dim)
         if cache_directory is not None:
             _save_reader_to_cache(reader, cache_file_path)
+            print('reader.py, cache saved to {}'.format(cache_file_path))
 
     return reader
 
@@ -216,7 +225,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     return reader
 
 
-def _make_reader(fh, encoding, trace_header_format, endian, progress):
+def _make_reader(fh, encoding, trace_header_format, endian, progress, dim):
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
     if encoding is None:
@@ -225,17 +234,29 @@ def _make_reader(fh, encoding, trace_header_format, endian, progress):
     binary_reel_header = read_binary_reel_header(fh, endian)
     extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
     bps = bytes_per_sample(binary_reel_header)
-
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
                                                                                            endian, progress)
-    if cdp_catalog is not None and line_catalog is None:
-        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+    if dim is None:
+        # original segpy logic.
+        if cdp_catalog is not None and line_catalog is None:
+            return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
-    if cdp_catalog is None and line_catalog is not None:
-        return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+        if cdp_catalog is None and line_catalog is not None:
+            return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                             trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
-    return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+        return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
                       trace_length_catalog, trace_header_format, encoding, endian)
+
+    else:
+        if dim == 2:
+            return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                            trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
+        if dim == 3:
+            return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
+                            trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
+        else:
+            print('_make_reader(), dim must be 2 or 3')
+            return None
 
 
 class SegYReader(Dataset):
