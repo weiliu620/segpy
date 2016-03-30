@@ -123,7 +123,7 @@ def create_reader(
         cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
         if cache_file_path is not None:
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
-            print('reader.py, reader loaded from {}', cache_file_path)
+            print('reader.py, reader loaded from {}'.format(cache_file_path))
 
     if reader is None:
         reader = _make_reader(fh, encoding, trace_header_format, endian, progress, dim = dim)
@@ -789,7 +789,12 @@ class SegYReader2D(SegYReader):
         Returns:
             True if the trace_samples exists, otherwise False.
         """
-        return self._cdp_catalog[cdp_number]
+        try:
+            trace_index = self._cdp_catalog[cdp_number]
+            return True
+        except KeyError, e:
+            return False
+        #return self._cdp_catalog[cdp_number]
 
     def trace_index(self, cdp_number):
         """Obtain the trace_samples index given an xline and a inline.

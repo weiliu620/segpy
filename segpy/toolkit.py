@@ -391,6 +391,7 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
         alt_line_catalog_builder.add((trace_header.file_sequence_num,
                                      trace_header.ensemble_num),
                                      trace_number)
+        # import pdb; pdb.set_trace()
         cdp_catalog_builder.add(trace_header.ensemble_num, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end

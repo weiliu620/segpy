@@ -121,9 +121,6 @@ def extract_trace(reader, trace_index, sample_numbers):
     Returns:
         A one-dimensional array.
     """
-    if not reader.has_trace_index(trace_index):
-        raise ValueError("Inline number {} not present in {}".format(trace_index, reader))
-
     sample_numbers = ensure_superset(range(0, reader.max_num_trace_samples()), sample_numbers)
 
     trace_sample_start = sample_numbers[0]
