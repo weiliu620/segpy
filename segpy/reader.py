@@ -790,9 +790,11 @@ class SegYReader2D(SegYReader):
             True if the trace_samples exists, otherwise False.
         """
         try:
+            # LW: change the code for the index = 0 case. Original code think 0
+            # is false, but 0 is a valid index number. 
             trace_index = self._cdp_catalog[cdp_number]
             return True
-        except KeyError, e:
+        except KeyError:
             return False
         #return self._cdp_catalog[cdp_number]
 
