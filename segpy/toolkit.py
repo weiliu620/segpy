@@ -22,6 +22,8 @@ from segpy.trace_header import TraceHeaderRev1
 from segpy.util import file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS, EMPTY_BYTE_STRING, \
     restored_position_seek
 
+from pympler import tracker
+import pdb
 
 HEADER_NEWLINE = '\r\n'
 
@@ -349,6 +351,7 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     if not callable(progress_callback):
         raise TypeError("catalog_traces(): progress callback must be callable")
 
+
     class CatalogSubFormat(metaclass=SubFormatMeta,
                            parent_format=trace_header_format,
                            parent_field_names=(
@@ -391,12 +394,10 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
         alt_line_catalog_builder.add((trace_header.file_sequence_num,
                                      trace_header.ensemble_num),
                                      trace_number)
-        # import pdb; pdb.set_trace()
+
         cdp_catalog_builder.add(trace_header.ensemble_num, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
-        # print('trace number, ', trace_number, trace_header.inline_number, trace_header.crossline_number,
-        #       trace_header.file_sequence_num, trace_header.ensemble_num)
 
 
     progress_callback(_READ_PROPORTION)

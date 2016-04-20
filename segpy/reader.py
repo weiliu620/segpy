@@ -116,12 +116,15 @@ def create_reader(
 
     reader = None
     cache_file_path = None
-
     if cache_directory is not None:
-        sha1 = hash_for_file(fh, encoding, trace_header_format, endian)
+        # sha1 = hash_for_file(fh, encoding, trace_header_format, endian)
         seg_y_path = filename_from_handle(fh)
-        cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
-        if cache_file_path is not None:
+        # cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
+        _, fname = os.path.split(fh.name)
+        fname, _ = os.path.splitext(fname)
+        cache_file_path = os.path.join(cache_directory, fname + '.pkl')
+
+        if os.path.exists(cache_file_path):
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
             print('reader.py, reader loaded from {}'.format(cache_file_path))
 
@@ -129,7 +132,8 @@ def create_reader(
         reader = _make_reader(fh, encoding, trace_header_format, endian, progress, dim = dim)
         if cache_directory is not None:
             _save_reader_to_cache(reader, cache_file_path)
-            print('reader.py, cache saved to {}'.format(cache_file_path))
+            print('reader.py, reader cached to {}'.format(cache_file_path))
+
 
     return reader
 
@@ -170,10 +174,10 @@ def _save_reader_to_cache(reader, cache_file_path):
         reader: The Reader instance to be persisted.
         cache_file_path: A Path instance giving the path to the pickle file location.
     """
-    cache_path = cache_file_path.parent
+    cache_path, _ = os.path.split(cache_file_path)
     os.makedirs(str(cache_path), exist_ok=True)
     try:
-        with cache_file_path.open('wb') as cache_file:
+        with open(cache_file_path, 'wb') as cache_file:
             try:
                 pickle.dump(reader, cache_file)
             except (pickle.PicklingError, TypeError) as pickling_error:
@@ -201,10 +205,7 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
         TypeError: If the pickle could be read, but did not contain a SegYReader.
     """
 
-    if not (cache_file_path.exists() and cache_file_path.is_file()):
-        return None
-
-    with cache_file_path.open('rb') as pickle_file:
+    with open(cache_file_path, 'rb') as pickle_file:
         try:
             reader = pickle.load(pickle_file)
         except (pickle.UnpicklingError, TypeError, EOFError) as unpickling_error:
